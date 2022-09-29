@@ -80,4 +80,8 @@ category_map = {
     28: 7,
     29: 7,
     30: 7
-}
+} # 0: unlabelled, 1: road, 2: building, 3: pole, 4: vegetation, 5: sky, 6: person, 7: vehicle
+
+num_classes = len(id_map.keys()) # 31
+
+def preprocess(path) :
