@@ -85,3 +85,28 @@ category_map = {
 num_classes = len(id_map.keys()) # 31
 
 def preprocess(path) :
+    img = Image.open(path)
+    img1 = img.crop((0, 0, 256, 256)).resize((128, 128)) # crop의 기능 = 이미지를 자르는 기능 왼쪽, 위, 오른쪽, 아래
+    img2 = img.crop((256, 0, 512, 256)).resize((128, 128)) # crop을 하는 이유 = 이미지의 크기를 줄이기 위해서
+    img1 = np.array(img1)/ 255. # 255로 나누는 이유 = 이미지의 픽셀값을 0~1사이의 값으로 바꾸기 위해서
+    img2 = np.array(img2)
+    mask = np.zeros(shape=(img2.shape[0], img2.shape[1]), dtype=np.uint32)
+    for row in range(img2.shape[0]) :
+        for col in range(img.shape[1]) :
+            a = img2[row, col, :] # a = img2의 픽셀값
+            final_key = None
+            for key, value in id_map.items():
+                d = np.sum(np.sqrt(pow( a - value, 2))) # d = a와 value의 차이 (픽셀값의 차이)
+                if final_key == None:
+                    final_d = d
+                    final_key = key
+                elif d < final_d:
+                    final_d = d
+                    final_key = key
+            mask[row, col] = final_key # mask = img2의 픽셀값을 id_map의 픽셀값으로 바꾼 값
+    mask = mask.reshape((mask.shape[0], mask.shape[1], 1))
+    del img2
+    return img1, mask
+
+def prepare_tensor_dataset(train_path, val_path) :
+    
