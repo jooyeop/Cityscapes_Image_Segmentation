@@ -109,4 +109,9 @@ def preprocess(path) :
     return img1, mask
 
 def prepare_tensor_dataset(train_path, val_path) :
-    
+    X_train = []
+    Y_train = []
+    X_val = []
+    Y_val = []
+    for file in tqdm(os.listdir(train_path)) :
+        
