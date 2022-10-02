@@ -114,4 +114,12 @@ def prepare_tensor_dataset(train_path, val_path) :
     X_val = []
     Y_val = []
     for file in tqdm(os.listdir(train_path)) :
-        
+        img, mask = preprocess(f'{train_path}/{file}')
+        X_train.append(img)
+        Y_train.append(mask)
+    for file in tqdm(os.listdir(val_path)) :
+        img, mask = preprocess(f'{val_path}/{file}')
+        X_val.append(img)
+        Y_val.append(mask)
+
+    return X_train, Y_train, X_val, Y_val
