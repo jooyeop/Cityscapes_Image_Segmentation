@@ -123,3 +123,10 @@ def prepare_tensor_dataset(train_path, val_path) :
         Y_val.append(mask)
 
     return X_train, Y_train, X_val, Y_val
+
+X_train, Y_train, X_valid, Y_valid = prepare_tensor_dataset('../dataset/cityscapes_data/train', '../dataset/cityscapes_data/val')
+
+X_train = np.array(X_train)
+Y_train = np.array(Y_train)
+X_valid = np.array(X_valid)
+Y_valid = np.array(Y_valid)
