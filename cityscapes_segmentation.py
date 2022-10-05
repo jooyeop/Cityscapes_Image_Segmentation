@@ -211,3 +211,6 @@ def get_unet_model():
     
     model = tf.keras.Model(inputs = [inputs], outputs = [outputs])
     return model
+
+model = get_unet_model()
+tf.keras.utils.plot_model(model, show_shapes = True)
