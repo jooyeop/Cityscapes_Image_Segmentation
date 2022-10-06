@@ -214,3 +214,9 @@ def get_unet_model():
 
 model = get_unet_model()
 tf.keras.utils.plot_model(model, show_shapes = True)
+
+#Utility Metrics and Callbacks classes
+
+class UpdatedMeanIoU(tf.keras.metrics.MeanIoU):
+    def __init__(self, y_true = None, y_pred = None, num_classes = None, name = None, dtype = None) :
+        super(UpdatedMeanIoU, self).__init__(num_classes = num_classes, name = name, dtype = dtype)
