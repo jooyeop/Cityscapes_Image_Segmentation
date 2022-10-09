@@ -224,4 +224,11 @@ class UpdatedMeanIoU(tf.keras.metrics.MeanIoU):
     def update_state(self, y_true, y_pred, sample_weight = None) :
         y_pred = tf.math.argmax(y_pred, axis = -1)
         return super().update_state(y_true, y_pred, sample_weight)
-        
+
+class VizCallback(tf.keras.callbacks.Callback):
+    def __init__(self, file_path, **kwargs):
+        super().__init__(**kwargs):
+        self.file_path = file_path
+
+    def on_epoch_end(self, epoch, logs = None):
+        img,mask = preprocess(self.file_path)
