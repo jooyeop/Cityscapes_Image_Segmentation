@@ -9,3 +9,4 @@ https://www.kaggle.com/datasets/dansbecker/cityscapes-image-pairs
 https://www.kaggle.com/code/tr1gg3rtrash/car-driving-segmentation-unet-from-scratch/notebook
 
 ## This is an ongoing project.
+## 진행중인 프로젝트입니다.
