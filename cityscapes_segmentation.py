@@ -227,8 +227,87 @@ class UpdatedMeanIoU(tf.keras.metrics.MeanIoU):
 
 class VizCallback(tf.keras.callbacks.Callback):
     def __init__(self, file_path, **kwargs):
-        super().__init__(**kwargs):
+        super().__init__(**kwargs)
         self.file_path = file_path
 
-    def on_epoch_end(self, epoch, logs = None):
-        img,mask = preprocess(self.file_path)
+    def on_epoch_end(self, epoch, logs=None):
+        img, mask = preprocess(self.file_path)
+        img = np.array(img)
+        img = np.reshape(img, (1, 128, 128, 3))
+        pred = model.predict(img)
+        y_pred = tf.math.argmax(pred, axis=-1)
+        y_pred = np.array(y_pred)
+        y_pred = np.reshape(y_pred, (128, 128))
+        fig, axes = plt.subplots(nrows = 1, ncols = 2)
+        axes[0].imshow(mask)
+        axes[0].set_title("Original Mask")
+        axes[1].imshow(y_pred)
+        axes[1].set_title("Predicted Mask")
+        plt.tight_layout()
+        plt.show()
+
+def plot_history(history):
+  fig, axes = plt.subplots(nrows = 1, ncols = 3, figsize=(20, 7))
+  # Training
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["loss"], ax = axes[0], label="Training Loss")
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["accuracy"], ax = axes[1], label="Training Accuracy")
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["mean_iou"], ax = axes[2], label="Training Mean IOU")
+
+  # Validation
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["val_loss"], ax = axes[0], label="Validation Loss")
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["val_accuracy"], ax = axes[1], label="Validation Accuracy")
+  sns.lineplot(range(1, len(history.history["loss"]) + 1), history.history["val_mean_iou"], ax = axes[2], label="Validation Mean IOU")
+  
+  axes[0].set_title("Loss Comparison", fontdict = {'fontsize': 15})
+  axes[0].set_xlabel("Epoch")
+  axes[0].set_ylabel("Loss")
+
+  axes[1].set_title("Accuracy Comparison", fontdict = {'fontsize': 15})
+  axes[1].set_xlabel("Epoch")
+  axes[1].set_ylabel("Accuracy")
+
+  axes[2].set_title("Mean IOU Comparison", fontdict = {'fontsize': 15})
+  axes[2].set_xlabel("Epoch")
+  axes[2].set_ylabel("Mean IOU")
+  plt.tight_layout()
+  plt.show()
+
+model.compile(loss = "sparse_categorical_crossentropy", optimizer = "adam", metrics = ["accuracy", UpdatedMeanIoU(num_classes=num_classes, name = "mean_iou")])
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience = 10, restore_best_weights = True)
+viz_callback = VizCallback("../input/cityscapes-image-pairs/cityscapes_data/val/106.jpg")
+
+#Model Training
+history = model.fit(x=X_train, y=Y_train, epochs = 100, batch_size = Batch_size, validation_data = (X_valid, Y_valid), callbacks=[early_stopping, viz_callback])
+
+#Training Results
+plot_history(history)
+
+#Insights from training
+'''
+It can be noticed that even after training for 35 epochs, the model has not achieved its peak performance. # 35epochs 동안 훈련을 시켜도 모델이 최고 성능에 도달하지 못했다.
+As the layer are initialised from scratch hence a more patience would have more. # 레이어가 처음부터 초기화되었기 때문에 더 많은 인내심이 있었을 것이다.
+The training and validation performance for most of the metrics are almost similary except IOU score. # 대부분의 지표에 대한 훈련 및 검증 성능은 IOU 점수를 제외하고 거의 동일하다.
+It can be noticed from from Mean IOU plot that after 20-25 epochs the model starts to overfit when comparing side by side with accuracy and loss but the culprit for this is the range scale between different plots.
+# Mean IOU 플롯에서 20-25 에포크 이후에 모델이 정확도 및 손실과 함께 비교할 때 과적합을 시작하는 것을 알 수 있다. 그러나 이것의 원인은 다른 플롯 사이의 범위 스케일이다.
+'''
+
+plt.style.use("default")
+for i in os.listdir("../input/cityscapes-image-pairs/cityscapes_data/val/")[:3]:
+    img, mask = preprocess(f"../input/cityscapes-image-pairs/cityscapes_data/val/{i}")
+    img = np.array(img)
+    img = np.reshape(img, (1, 128, 128, 3))
+    pred = model.predict(img)
+    y_pred = tf.math.argmax(pred, axis=-1)
+    y_pred = np.array(y_pred)
+    y_pred = np.reshape(y_pred, (128, 128))
+    fig, axes = plt.subplots(nrows = 1, ncols = 3, figsize=(10, 5))
+    img = np.reshape(img, (128, 128, 3))
+    axes[0].imshow(img)
+    axes[0].set_title("Original Image")
+    axes[0].axis("off")
+    axes[1].imshow(mask, cmap="viridis")
+    axes[1].set_title("Original Mask")
+    axes[1].axis("off")
+    axes[2].imshow(y_pred, cmap="viridis")
+    axes[2].set_title("Predicted Mask")
+    axes[2].axis("off")
