@@ -212,10 +212,10 @@ def get_unet_model():
     model = tf.keras.Model(inputs = [inputs], outputs = [outputs])
     return model
 
-model = get_unet_model()
-tf.keras.utils.plot_model(model, show_shapes = True)
+model = get_unet_model() # 모델 생성
+tf.keras.utils.plot_model(model, show_shapes = True) # 모델 구조 확인
 
-#Utility Metrics and Callbacks classes
+#Utility Metrics and Callbacks classes 콜백 함수 정의
 
 class UpdatedMeanIoU(tf.keras.metrics.MeanIoU):
     def __init__(self, y_true = None, y_pred = None, num_classes = None, name = None, dtype = None) :
@@ -272,17 +272,17 @@ def plot_history(history):
   plt.tight_layout()
   plt.show()
 
-model.compile(loss = "sparse_categorical_crossentropy", optimizer = "adam", metrics = ["accuracy", UpdatedMeanIoU(num_classes=num_classes, name = "mean_iou")])
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience = 10, restore_best_weights = True)
-viz_callback = VizCallback("../input/cityscapes-image-pairs/cityscapes_data/val/106.jpg")
+model.compile(loss = "sparse_categorical_crossentropy", optimizer = "adam", metrics = ["accuracy", UpdatedMeanIoU(num_classes=num_classes, name = "mean_iou")]) # 모델 컴파일
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience = 10, restore_best_weights = True) # 조기 종료 콜백 함수
+viz_callback = VizCallback("../input/cityscapes-image-pairs/cityscapes_data/val/106.jpg") # 콜백 함수 생성
 
 #Model Training
-history = model.fit(x=X_train, y=Y_train, epochs = 100, batch_size = Batch_size, validation_data = (X_valid, Y_valid), callbacks=[early_stopping, viz_callback])
+history = model.fit(x=X_train, y=Y_train, epochs = 100, batch_size = Batch_size, validation_data = (X_valid, Y_valid), callbacks=[early_stopping, viz_callback]) # 모델 학습
 
 #Training Results
-plot_history(history)
+plot_history(history) # 학습 결과 시각화
 
-#Insights from training
+#Insights from training 결과 분석
 '''
 It can be noticed that even after training for 35 epochs, the model has not achieved its peak performance. # 35epochs 동안 훈련을 시켜도 모델이 최고 성능에 도달하지 못했다.
 As the layer are initialised from scratch hence a more patience would have more. # 레이어가 처음부터 초기화되었기 때문에 더 많은 인내심이 있었을 것이다.
