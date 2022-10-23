@@ -87,10 +87,10 @@ model=Model(inputs=[inputs], outputs=[outputs],name='AttnetionUnet')
 
 ## 한계점 및 해결 방안
 국내 데이터를 활용하여 모델을 구축해볼 예정
-
 다른 사람의 참고코드를 활용한것이 아닌 직접 모델을 만드는 프로젝트 진행 예정
+
+
 
 
 참고 코드
 https://www.kaggle.com/code/shashank069/brainmri-image-segmentation-attentionunet/notebook
-
