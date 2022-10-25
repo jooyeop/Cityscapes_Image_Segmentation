@@ -1,18 +1,16 @@
-# brain segmentation
-U-net 모델을 활용한 brain segmentation 프로젝트
+# Cityscapes_Image_Segmentation 프로젝트
+U-net 모델을 활용한 Cityscapes_Image_Segmentation 프로젝트
 
 ## 프로젝트 목적
-사람의 뇌 MRI 데이터를 활용해 Segmentation으로 신경교종 종양 유형의 환자를 구별
+도시 이미지를 활용하여 각 class segmentation 진행
 
 ## 프로젝트 배경
 Segmentaion 기술에 대한 이해력 상승 및 모델 이해력 상승
 
 ## 연구 및 개발에 필요한 데이터 셋 소개
-https://www.kaggle.com/datasets/mateuszbuda/lgg-mri-segmentation
+https://www.kaggle.com/datasets/dansbecker/cityscapes-image-pairs
 
-1.kaggle에서 뇌 종양 환자의 데이터셋을 다운로드 받아 모델을 구현하였습니다.
-
-2.국내 데이터를 통해 프로젝트를 하고 싶었지만, 의료데이터를 구하기 쉽지 않았습니다.
+1.kaggle에서 도시 이미지의 데이터셋을 다운로드 받아 모델을 구현하였습니다.
 
 
 ## 연구 및 개발에 필요한 기술 스택
@@ -30,67 +28,98 @@ Data Augmentation이 중요한 이유
 
       
 ```Python3
-def conv_block(inp,filters):
-    x=Conv2D(filters,(3,3),padding='same',activation='relu')(inp)
-    x=Conv2D(filters,(3,3),padding='same')(x)
-    x=BatchNormalization(axis=3)(x)
-    x=Activation('relu')(x)
-    return x
-
-def encoder_block(inp,filters):
-    x=conv_block(inp,filters)
-    p=MaxPooling2D(pool_size=(2,2))(x)
-    return x,p
-
-def attention_block(l_layer,h_layer): #Attention Block
-    phi=Conv2D(h_layer.shape[-1],(1,1),padding='same')(l_layer)
-    theta=Conv2D(h_layer.shape[-1],(1,1),strides=(2,2),padding='same')(h_layer)
-    x=tf.keras.layers.add([phi,theta])
-    x=Activation('relu')(x)
-    x=Conv2D(1,(1,1),padding='same',activation='sigmoid')(x)
-    x=UpSampling2D(size=(2,2))(x)
-    x=tf.keras.layers.multiply([h_layer,x])
-    x=BatchNormalization(axis=3)(x)
-    return x
+def get_unet_model():
     
-def decoder_block(inp,filters,concat_layer):
-    x=Conv2DTranspose(filters,(2,2),strides=(2,2),padding='same')(inp)
-    concat_layer=attention_block(inp,concat_layer)
-    x=concatenate([x,concat_layer])
-    x=conv_block(x,filters)
-    return x
+    inputs = tf.keras.layers.Input(shape = [128, 128, 3])
     
-inputs=Input((256,256,3))
-d1,p1=encoder_block(inputs,64)
-d2,p2=encoder_block(p1,128)
-d3,p3=encoder_block(p2,256)
-d4,p4=encoder_block(p3,512)
-b1=conv_block(p4,1024)
-e2=decoder_block(b1,512,d4)
-e3=decoder_block(e2,256,d3)
-e4=decoder_block(e3,128,d2)
-e5=decoder_block(e4,64,d1)
-outputs = Conv2D(1, (1,1),activation="sigmoid")(e5)
-model=Model(inputs=[inputs], outputs=[outputs],name='AttnetionUnet')
+    #First Downsample
+    f1 = tf.keras.layers.Conv2D(64, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(inputs)
+    b1 = tf.keras.layers.BatchNormalization()(f1)
+    f2 = tf.keras.layers.Conv2D(64, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b1)    # Used later for residual connection
+    
+    m3 = tf.keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2)(f2)
+    d4 = tf.keras.layers.Dropout(0.2)(m3)
+    
+    # Second Downsample
+    f5 = tf.keras.layers.Conv2D(128, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(d4)
+    b5 = tf.keras.layers.BatchNormalization()(f5)
+    f6 = tf.keras.layers.Conv2D(128, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b5)    # Used later for residual connection
+    
+    m7 = tf.keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2)(f6)
+    d8 = tf.keras.layers.Dropout(0.2)(m7)
+    
+    # Third Downsample
+    f9 = tf.keras.layers.Conv2D(256, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(d8)
+    b9 = tf.keras.layers.BatchNormalization()(f9)
+    f10 = tf.keras.layers.Conv2D(256, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b9)    # Used later for residual connection
+    
+    m11 = tf.keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2)(f10)
+    d12 = tf.keras.layers.Dropout(0.2)(m11)
+    
+    #Forth Downsample
+    f13 = tf.keras.layers.Conv2D(512, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(d12)
+    b13 = tf.keras.layers.BatchNormalization()(f13)
+    f14 = tf.keras.layers.Conv2D(512, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b13)    # Used later for residual connection
+    
+    m15 = tf.keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2)(f14)
+    d16 = tf.keras.layers.Dropout(0.2)(m15)
+    
+    #Fifth Downsample
+    f17 = tf.keras.layers.Conv2D(1024, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(d16)
+    b17 = tf.keras.layers.BatchNormalization()(f17)
+    f18 = tf.keras.layers.Conv2D(1024, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b17)
 
+    
+    # First Upsample
+    m19 = tf.keras.layers.UpSampling2D(size = (2, 2))(f18)
+    d19 = tf.keras.layers.Dropout(0.2)(m19)
+    c20 = tf.keras.layers.Concatenate()([d19, f14])
+    f21 = tf.keras.layers.Conv2D(512, kernel_size = (3, 3), padding = "same", strides = 1 ,activation = "relu")(c20)
+    b21 = tf.keras.layers.BatchNormalization()(f21)
+    f22 = tf.keras.layers.Conv2D(512, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b21)
+    
+    # Second Upsample
+    m23 = tf.keras.layers.UpSampling2D(size = (2, 2))(f22)
+    d23 = tf.keras.layers.Dropout(0.2)(m23)
+    c24 = tf.keras.layers.Concatenate()([d23, f10])
+    f25 = tf.keras.layers.Conv2D(256, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(c24)
+    b25 = tf.keras.layers.BatchNormalization()(f25)
+    f26 = tf.keras.layers.Conv2D(256, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b25)
+    
+    # Third Upsample
+    m27 = tf.keras.layers.UpSampling2D(size = (2, 2))(f26)
+    d27 = tf.keras.layers.Dropout(0.2)(m27)
+    c28 = tf.keras.layers.Concatenate()([d27, f6])
+    f29 = tf.keras.layers.Conv2D(128, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(c28)
+    b29 = tf.keras.layers.BatchNormalization()(f29)
+    f30 = tf.keras.layers.Conv2D(128, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b29)
+    
+    #Forth Upsample
+    m31 = tf.keras.layers.UpSampling2D(size = (2, 2))(f30)
+    d31 = tf.keras.layers.Dropout(0.2)(m31)
+    c32 = tf.keras.layers.Concatenate()([d31, f2])
+    f33 = tf.keras.layers.Conv2D(64, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(c32)
+    b33 = tf.keras.layers.BatchNormalization()(f33)
+    f34 = tf.keras.layers.Conv2D(64, kernel_size = (3, 3), padding = "same", strides = 1, activation = "relu")(b33)
+    
+    # Output Layer
+    outputs = tf.keras.layers.Conv2D(num_classes, kernel_size = (3, 3), padding = "same", strides = 1, activation = "softmax")(f34)
+    
+    model = tf.keras.Model(inputs = [inputs], outputs = [outputs])
+    return model
+
+model = get_unet_model() # 모델 생성
+tf.keras.utils.plot_model(model, show_shapes = True) # 모델 구조 확인
 ```
 
 
 ## 결과
-종양의 Segmentation이 포착됨
-
-![image](https://user-images.githubusercontent.com/97720878/188047307-bfaa863c-2745-46e2-acf5-6efd4ca613a3.png)
-![image](https://user-images.githubusercontent.com/97720878/188047351-796cf6c1-b3a4-4284-86d7-c80b04c82dd0.png)
-![image](https://user-images.githubusercontent.com/97720878/188047379-6113cacc-91bd-4ca8-8908-c38a0b190b02.png)
-![image](https://user-images.githubusercontent.com/97720878/188047215-9b9f7652-0c07-40ff-9ac7-3ab79ceee21d.png)
-
+![__results___23_1](https://user-images.githubusercontent.com/97720878/197787923-0ff968f8-4ca6-47e2-9581-4e31ecdb58b8.png)
 
 ## 한계점 및 해결 방안
 국내 데이터를 활용하여 모델을 구축해볼 예정
 다른 사람의 참고코드를 활용한것이 아닌 직접 모델을 만드는 프로젝트 진행 예정
 
 
-
-
 참고 코드
-https://www.kaggle.com/code/shashank069/brainmri-image-segmentation-attentionunet/notebook
+https://www.kaggle.com/code/tr1gg3rtrash/car-driving-segmentation-unet-from-scratch
