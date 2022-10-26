@@ -123,3 +123,4 @@ tf.keras.utils.plot_model(model, show_shapes = True) # 모델 구조 확인
 
 참고 코드
 https://www.kaggle.com/code/tr1gg3rtrash/car-driving-segmentation-unet-from-scratch
+
